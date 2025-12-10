@@ -1,0 +1,84 @@
+const express = require("express");
+const router = express.Router();
+const Product = require("../models/product");
+
+// CREATE (POST /api/products)
+router.post("/", async (req, res) => {
+  try {
+    const { name, weight, price } = req.body;
+
+    if (!name || weight == null || price == null) {
+      return res
+        .status(400)
+        .json({ message: "name, weight, price are required" });
+    }
+
+    const product = await Product.create({ name, weight, price });
+    return res.status(201).json(product);
+  } catch (err) {
+    console.error("Create error:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+// READ ALL (GET /api/products)
+router.get("/", async (req, res) => {
+  try {
+    const products = await Product.find().sort({ createdAt: -1 });
+    return res.status(200).json(products);
+  } catch (err) {
+    console.error("Get all error:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+// READ ONE (GET /api/products/:id)
+router.get("/:id", async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product)
+      return res.status(404).json({ message: "Product not found" });
+
+    return res.status(200).json(product);
+  } catch (err) {
+    console.error("Get one error:", err);
+    return res.status(400).json({ message: "Invalid ID" });
+  }
+});
+
+// UPDATE (PUT /api/products/:id)
+router.put("/:id", async (req, res) => {
+  try {
+    const { name, weight, price } = req.body;
+
+    const product = await Product.findByIdAndUpdate(
+      req.params.id,
+      { name, weight, price },
+      { new: true, runValidators: true }
+    );
+
+    if (!product)
+      return res.status(404).json({ message: "Product not found" });
+
+    return res.status(200).json(product);
+  } catch (err) {
+    console.error("Update error:", err);
+    return res.status(400).json({ message: "Invalid data or ID" });
+  }
+});
+
+// DELETE (DELETE /api/products/:id)
+router.delete("/:id", async (req, res) => {
+  try {
+    const product = await Product.findByIdAndDelete(req.params.id);
+    if (!product)
+      return res.status(404).json({ message: "Product not found" });
+
+    return res.status(200).json({ message: "Product deleted" });
+  } catch (err) {
+    console.error("Delete error:", err);
+    return res.status(400).json({ message: "Invalid ID" });
+  }
+});
+
+module.exports = router;
